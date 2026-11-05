@@ -1,0 +1,8 @@
+.DS_Store
+/dist/
+/visiodrawio
+*.test
+*.out
+*.mcpb
+*.drawio
+*.vsdx

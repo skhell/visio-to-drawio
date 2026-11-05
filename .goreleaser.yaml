@@ -1,0 +1,74 @@
+version: 2
+project_name: visiodrawio
+
+builds:
+  - main: ./cmd/visiodrawio
+    binary: visiodrawio
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ldflags: ["-s -w -X main.version={{.Version}}"]
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files: [LICENSE, README.md]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  filters:
+    exclude: ["^docs:", "^chore:", "^ci:"]
+
+# Homebrew cask, published to github.com/skhell/homebrew-tap
+homebrew_casks:
+  - name: visiodrawio
+    binaries: [visiodrawio]
+    homepage: "https://github.com/skhell/visio-to-drawio"
+    description: "Convert Microsoft Visio .vsdx and .vstx diagrams to editable draw.io files, locally via CLI or via an MCP server and a skill."
+    repository:
+      owner: skhell
+      name: homebrew-tap
+      token: "{{ .Env.PACKAGE_REPOS_TOKEN }}"
+    hooks:
+      post:
+        install_steps: |
+          on_macos do
+            run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}/visiodrawio"]
+          end
+
+# Scoop manifest, published to github.com/skhell/scoop-bucket
+scoops:
+  - name: visiodrawio
+    homepage: "https://github.com/skhell/visio-to-drawio"
+    description: "Convert Microsoft Visio .vsdx and .vstx diagrams to editable draw.io files, locally via CLI or via an MCP server and a skill."
+    license: MIT
+    repository:
+      owner: skhell
+      name: scoop-bucket
+      token: "{{ .Env.PACKAGE_REPOS_TOKEN }}"
+winget:
+  - name: visiodrawio
+    publisher: skhell
+    package_identifier: skhell.visiodrawio
+    short_description: "Convert Microsoft Visio .vsdx and .vstx diagrams to editable draw.io files, locally via CLI or via an MCP server and a skill."
+    license: MIT
+    homepage: "https://github.com/skhell/visio-to-drawio"
+    publisher_url: "https://github.com/skhell"
+    tags: [visio, drawio, diagrams, converter, mcp]
+    repository:
+      owner: skhell
+      name: winget-pkgs
+      branch: "visiodrawio-{{ .Version }}"
+      token: "{{ .Env.WINGET_TOKEN }}"
+      pull_request:
+        enabled: true
+        draft: false
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
