@@ -1,0 +1,22 @@
+name: Bug report
+description: Something converts wrongly or the tool fails
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version (`visiodrawio -version`)
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Command and output
+      description: Attach a minimal, non-confidential .vsdx or .vsdx.
+      render: shell
