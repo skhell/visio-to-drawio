@@ -12,7 +12,7 @@
       "name": "visiodrawio",
       "source": "./plugins/visiodrawio",
       "description": "Convert Microsoft Visio .vsdx and .vstx diagrams to editable draw.io files, locally via CLI or via an MCP server and a skill.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "license": "MIT",
       "homepage": "https://github.com/skhell/visio-to-drawio",
       "keywords": ["drawio", "microsoft-visio-to-drawio", "visio-converter", "diagrams", "mcp"]
