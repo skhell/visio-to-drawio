@@ -1,0 +1,45 @@
+version: 2
+project_name: visiodrawio
+
+builds:
+  - main: ./cmd/visiodrawio
+    binary: visiodrawio
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ldflags: ["-s -w -X main.version={{.Version}}"]
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files: [LICENSE, README.md]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  filters:
+    exclude: ["^docs:", "^chore:", "^ci:"]
+
+# Homebrew cask, published to github.com/skhell/homebrew-tap.
+# Disabled until the tap exists; see SETUPGUIDE.md, "Homebrew tap".
+# homebrew_casks:
+#   - name: visiodrawio
+#     binaries: [visiodrawio]
+#     homepage: "https://github.com/skhell/visio-to-drawio"
+#     description: "Convert Microsoft Visio .vsdx/.vstx files into multi-page draw.io diagrams"
+#     repository:
+#       owner: skhell
+#       name: homebrew-tap
+#       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+#     hooks:
+#       post:
+#         # The binary is not signed or notarized by Apple: clear the quarantine flag
+#         # so macOS does not report it as damaged.
+#         install_steps: |
+#           on_macos do
+#             run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}/visiodrawio"]
+#           end
