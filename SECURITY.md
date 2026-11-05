@@ -16,7 +16,7 @@ plan within 30 days.
 
 ## Scope and threat model
 
-visiodrawio parses untrusted `.vsdx`/`.vstx`files (ZIP archives
+visiodrawio parses untrusted `.vsdx`/`.vstx` files (ZIP archives
 containing XML and images).
 Relevant issues include crashes or excessive memory/CPU use
 on crafted input (e.g. zip bombs), path traversal in archive entries,
