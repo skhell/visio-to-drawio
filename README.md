@@ -191,6 +191,11 @@ go build ./cmd/visiodrawio
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 Report vulnerabilities as described in [SECURITY.md](SECURITY.md).
 
+## Privacy
+
+visiodrawio runs locally, makes no network connections and collects no
+data. See the [Privacy Policy](PRIVACY.md).
+
 ## License
 
 [MIT](LICENSE). The MIT license covers this project's source code only.
