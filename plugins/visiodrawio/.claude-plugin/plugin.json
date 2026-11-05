@@ -6,6 +6,7 @@
   "author": { "name": "skhell", "url": "https://github.com/skhell" },
   "homepage": "https://github.com/skhell/visio-to-drawio",
   "supportUrl": "https://github.com/skhell/visio-to-drawio/issues",
+  "privacyPolicyUrl": "https://github.com/skhell/visio-to-drawio/blob/main/PRIVACY.md",
   "repository": "https://github.com/skhell/visio-to-drawio",
   "license": "MIT",
   "keywords": ["visio", "vsdx", "drawio", "diagrams", "mcp"]
