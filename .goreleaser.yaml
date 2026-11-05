@@ -16,6 +16,11 @@ archives:
         formats: [zip]
     files: [LICENSE, README.md]
 
+release:
+  # Re-running a failed release replaces assets that were already
+  # uploaded  instead of failing with "already_exists".
+  replace_existing_artifacts: true
+
 checksum:
   name_template: checksums.txt
 

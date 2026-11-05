@@ -6,6 +6,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-05
+
+### Changed
+- Release workflow: GitHub Actions updated (`actions/checkout`,
+  `actions/setup-go` and `goreleaser/goreleaser-action` v7); re-running
+  a release replaces assets that were already uploaded.
+
+### Added
+- Claude Code plugin icon.
+
 ## [0.1.0] - 2026-11-05
 
 First public release.
@@ -36,5 +46,6 @@ First public release.
 - Prebuilt binaries for Linux, macOS and Windows (amd64, arm64)
   via GoReleaser.
 
-[Unreleased]: https://github.com/skhell/visio-to-drawio/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/skhell/visio-to-drawio/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/skhell/visio-to-drawio/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/skhell/visio-to-drawio/releases/tag/v0.1.0
