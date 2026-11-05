@@ -6,6 +6,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- README setup instructions per assistant (Claude Code, Claude Desktop,
+  GitHub Copilot in VS Code and the Copilot CLI, OpenAI Codex,
+  other MCP clients), and which clients can't use a local server.
+- Privacy policy (`PRIVACY.md`), linked from the README and the
+  plugin listing.
+
 ## [0.1.1] - 2026-11-05
 
 ### Changed

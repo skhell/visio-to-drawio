@@ -115,7 +115,8 @@ visiodrawio a.vsdx b.vstx -o out -force   # several files, overwrite existing ou
 
 ## Use it from AI assistants
 
-`visiodrawio mcp` start an MCP server over stdio that exposes two tools:
+`visiodrawio mcp` starts a local MCP server over stdio that exposes
+two tools:
 
 | Tool | Purpose |
 |------|---------|
@@ -125,6 +126,20 @@ visiodrawio a.vsdx b.vstx -o out -force   # several files, overwrite existing ou
 Everything runs locally, and files are never uploaded anywhere.
 Ask your assistant something like **convert my `microsoft-visio-diagram.vsdx` to draw.io**.
 
+Every setup below needs the `visiodrawio` binary on your `PATH`
+(see [Install](#install)). If your client can't find it, use the
+binary's full path as the command.
+
+| Assistant | Supported | Setup |
+|-----------|-----------|-------|
+| Claude Code, Cowork | Yes | [Plugin](#claude-code) |
+| Claude Desktop | Yes | [Config file](#claude-desktop) |
+| GitHub Copilot in VS Code | Yes | [`code --add-mcp`](#github-copilot-vs-code) |
+| GitHub Copilot CLI | Yes | [`copilot mcp add`](#github-copilot-cli) |
+| OpenAI Codex | Yes | [`config.toml`](#openai-codex) |
+| Cursor and other MCP clients | Yes | [Generic config](#other-mcp-clients) |
+| ChatGPT, claude.ai in the browser, Microsoft 365 Copilot / Copilot Studio | Not yet | [Remote clients](#remote-only-clients) |
+
 ### Claude Code
 
 ```text
@@ -133,12 +148,12 @@ Ask your assistant something like **convert my `microsoft-visio-diagram.vsdx` to
 ```
 
 The plugin registers the MCP server and a skill that teaches Claude when
-and how to convert diagrams. It needs the `visiodrawio` binary on
-your `PATH` (see [Install](#install)).
+and how to convert diagrams.
 
-### Claude Desktop, Codex CLI, GitHub Copilot, Cursor and other MCP clients
+### Claude Desktop
 
-Add the server to your client's MCP configuration:
+Open **Settings -> Developer -> Edit Config** and add the server to
+`claude_desktop_config.json`, then restart Claude Desktop:
 
 ```json
 {
@@ -151,13 +166,75 @@ Add the server to your client's MCP configuration:
 }
 ```
 
-Codex CLI (`~/.codex/config.toml`):
+### GitHub Copilot (VS Code)
+
+Add the server to your VS Code user profile from a terminal:
+
+```sh
+code --add-mcp '{"name":"visiodrawio","type":"stdio","command":"visiodrawio","args":["mcp"]}'
+```
+
+Or add it to a workspace's `.vscode/mcp.json` (VS Code uses `servers`,
+not `mcpServers`):
+
+```json
+{
+  "servers": {
+    "visiodrawio": {
+      "type": "stdio",
+      "command": "visiodrawio",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+The tools are then available in Copilot Chat in agent mode.
+
+### GitHub Copilot CLI
+
+```sh
+copilot mcp add visiodrawio -- visiodrawio mcp
+```
+
+This writes the server to `~/.copilot/mcp-config.json`. Inside an
+interactive session, `/mcp add` opens the same setup as a form.
+
+### OpenAI Codex
+
+Add to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.visiodrawio]
 command = "visiodrawio"
 args = ["mcp"]
 ```
+
+### Other MCP clients
+
+Cursor and most other clients that run local (stdio) MCP servers accept
+this format in their MCP configuration file:
+
+```json
+{
+  "mcpServers": {
+    "visiodrawio": {
+      "command": "visiodrawio",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+### Remote-only clients
+
+ChatGPT, claude.ai in the browser and mobile apps, and Microsoft 365
+Copilot agents built in Copilot Studio only connect to remote MCP
+servers over HTTPS. `visiodrawio` runs on your own computer and is not
+hosted anywhere, so these clients can't use it.
+With OpenAI, use [Codex](#openai-codex) instead.
+
+### Restricting file access
 
 To confine the server to a directory tree, set `VISIODRAWIO_ROOT`.
 Input and output paths outside it are rejected:
