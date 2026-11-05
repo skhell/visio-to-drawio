@@ -24,22 +24,51 @@ changelog:
   filters:
     exclude: ["^docs:", "^chore:", "^ci:"]
 
-# Homebrew cask, published to github.com/skhell/homebrew-tap.
-# Disabled until the tap exists; see SETUPGUIDE.md, "Homebrew tap".
-# homebrew_casks:
-#   - name: visiodrawio
-#     binaries: [visiodrawio]
-#     homepage: "https://github.com/skhell/visio-to-drawio"
-#     description: "Convert Microsoft Visio .vsdx/.vstx files into multi-page draw.io diagrams"
-#     repository:
-#       owner: skhell
-#       name: homebrew-tap
-#       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
-#     hooks:
-#       post:
-#         # The binary is not signed or notarized by Apple: clear the quarantine flag
-#         # so macOS does not report it as damaged.
-#         install_steps: |
-#           on_macos do
-#             run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}/visiodrawio"]
-#           end
+# Homebrew cask, published to github.com/skhell/homebrew-tap
+homebrew_casks:
+  - name: visiodrawio
+    binaries: [visiodrawio]
+    homepage: "https://github.com/skhell/visio-to-drawio"
+    description: "Convert Microsoft Visio .vsdx and .vstx diagrams to editable draw.io files, locally via CLI or via an MCP server and a skill."
+    repository:
+      owner: skhell
+      name: homebrew-tap
+      token: "{{ .Env.PACKAGE_REPOS_TOKEN }}"
+    hooks:
+      post:
+        install_steps: |
+          on_macos do
+            run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}/visiodrawio"]
+          end
+
+# Scoop manifest, published to github.com/skhell/scoop-bucket
+scoops:
+  - name: visiodrawio
+    homepage: "https://github.com/skhell/visio-to-drawio"
+    description: "Convert Microsoft Visio .vsdx and .vstx diagrams to editable draw.io files, locally via CLI or via an MCP server and a skill."
+    license: MIT
+    repository:
+      owner: skhell
+      name: scoop-bucket
+      token: "{{ .Env.PACKAGE_REPOS_TOKEN }}"
+winget:
+  - name: visiodrawio
+    publisher: skhell
+    package_identifier: skhell.visiodrawio
+    short_description: "Convert Microsoft Visio .vsdx and .vstx diagrams to editable draw.io files, locally via CLI or via an MCP server and a skill."
+    license: MIT
+    homepage: "https://github.com/skhell/visio-to-drawio"
+    publisher_url: "https://github.com/skhell"
+    tags: [visio, drawio, diagrams, converter, mcp]
+    repository:
+      owner: skhell
+      name: winget-pkgs
+      branch: "visiodrawio-{{ .Version }}"
+      token: "{{ .Env.WINGET_TOKEN }}"
+      pull_request:
+        enabled: true
+        draft: false
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
