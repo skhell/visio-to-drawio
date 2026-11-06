@@ -6,12 +6,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-06
+
 ### Added
 - README setup instructions per assistant (Claude Code, Claude Desktop,
   GitHub Copilot in VS Code and the Copilot CLI, OpenAI Codex,
   other MCP clients), and which clients can't use a local server.
 - Privacy policy (`PRIVACY.md`), linked from the README and the
   plugin listing.
+
+### Fixed
+- Running `visiodrawio` with no arguments prints the usage and exits
+  with code 0 instead of 2, so winget's install validation, which runs
+  the binary without arguments, no longer reports a failure. Unknown
+  flags still exit with code 2.
 
 ## [0.1.1] - 2026-11-05
 
@@ -53,6 +61,7 @@ First public release.
 - Prebuilt binaries for Linux, macOS and Windows (amd64, arm64)
   via GoReleaser.
 
-[Unreleased]: https://github.com/skhell/visio-to-drawio/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/skhell/visio-to-drawio/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/skhell/visio-to-drawio/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/skhell/visio-to-drawio/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/skhell/visio-to-drawio/releases/tag/v0.1.0

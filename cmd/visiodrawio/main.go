@@ -81,7 +81,7 @@ func main() {
 	}
 	if len(files) == 0 {
 		flag.Usage()
-		os.Exit(2)
+		return
 	}
 	opt := converter.Options{NoFit: *noFit, Split: *split, NoBG: *noBG, BGEditable: *bgEditable, HideLayers: splitList(*hideLayers)}
 	failed := false
