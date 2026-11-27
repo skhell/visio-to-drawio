@@ -1,8 +1,6 @@
-# Maintainers
+## Maintainers (in alphabetical order)
 
-| Name | GitHub | Role |
-|------|--------|------|
-| Tia Zanella | [@skhell](https://github.com/skhell) | Author and lead maintainer |
+- [Tia Zanella (@skhell)](https://github.com/skhell)
 
 Maintainers review pull requests, triage issues, handle security reports
 (see [SECURITY.md](SECURITY.md)).
