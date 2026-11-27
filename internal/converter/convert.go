@@ -25,13 +25,18 @@ import (
 	"bytes"
 	"compress/flate"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/xml"
 	"fmt"
 	"html"
+	"image"
+	"image/color"
+	"image/png"
 	"math"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -291,7 +296,7 @@ type charProps struct {
 
 func (c *Conv) charProps(s *XShape, ix string) charProps {
 	p := c.pkg
-	cp := charProps{size: 8, color: "#000000", font: "Arial"}
+	cp := charProps{size: 8, color: "#000000", font: "Calibri"} // the theme font of Visio's default styles
 	if v, ok := p.rowProp(s, "Character", ix, "Size"); ok {
 		cp.size = fnum(v) * pxPerInch
 	}
@@ -443,6 +448,10 @@ func (c *Conv) lineStyle(s *XShape, noLine bool) []string {
 		st = append(st, "dashed=1", "fixDash=1", "dashPattern="+num2(math.Max(lw, 1.5))+" "+num2(math.Max(lw*2, 2.5)))
 	case 4, 5, 6:
 		st = append(st, "dashed=1", "fixDash=1", "dashPattern="+num2(math.Max(lw*4, 4))+" "+num2(math.Max(lw*2, 2.5))+" "+num2(math.Max(lw, 1.5))+" "+num2(math.Max(lw*2, 2.5)))
+	default:
+		if v := int(p.num(s, "LinePattern", 1)); v > 10 {
+			st = append(st, "dashed=1", "fixDash=1", "dashPattern="+num2(math.Max(lw*2, 4))+" "+num2(math.Max(lw*1.5, 3)))
+		}
 	}
 	return st
 }
@@ -661,23 +670,27 @@ func (c *Conv) vector(s *XShape, M Mat, layer *LayerOut, hidden bool, w, h float
 	if len(secs) == 1 && len(secs[0].Paths) == 1 {
 		g, sp := secs[0], secs[0].Paths[0]
 		_, _, _, _, full := c.textBox(s, w, h)
-		if sp.Ellipse != nil && w > 0 && h > 0 && (full || !hasText) {
+		inline := hasText && full
+		if sp.Ellipse != nil && w > 0 && h > 0 {
 			e := sp.Ellipse
 			ctr := M.Apply(Pt{e[0], e[1]})
 			st := append([]string{"ellipse"}, c.fillStyle(s, g.NoFill)...)
 			st = append(st, c.lineStyle(s, g.NoLine)...)
-			if hasText {
+			if inline {
 				st = append(st, label.style)
 			}
 			st = append(st, "rotation="+num2(matRot(M)))
 			o := &Out{Style: strings.Join(st, ";"), X: ctr.X - e[2]*c.gpx(), Y: ctr.Y - e[3]*c.gpx(), W: 2 * e[2] * c.gpx(), H: 2 * e[3] * c.gpx()}
-			if hasText {
+			if inline {
 				o.Value = label.html
 			}
 			c.add(layer, o, hidden)
+			if hasText && !inline {
+				c.textCell(s, M, layer, hidden, w, h, label, rotation)
+			}
 			return "ellipse"
 		}
-		if isRect(sp, w, h) && (full || !hasText) {
+		if isRect(sp, w, h) {
 			ctr := M.Apply(Pt{w / 2, h / 2})
 			st := []string{}
 			if r := c.pkg.num(s, "Rounding", 0); r > 0 {
@@ -687,15 +700,18 @@ func (c *Conv) vector(s *XShape, M Mat, layer *LayerOut, hidden bool, w, h float
 			}
 			st = append(st, c.fillStyle(s, g.NoFill)...)
 			st = append(st, c.lineStyle(s, g.NoLine)...)
-			if hasText {
+			if inline {
 				st = append(st, label.style)
 			}
 			st = append(st, "rotation="+num2(matRot(M)))
 			o := &Out{Style: strings.Join(st, ";"), X: ctr.X - w*c.gpx()/2, Y: ctr.Y - h*c.gpx()/2, W: w * c.gpx(), H: h * c.gpx()}
-			if hasText {
+			if inline {
 				o.Value = label.html
 			}
 			c.add(layer, o, hidden)
+			if hasText && !inline {
+				c.textCell(s, M, layer, hidden, w, h, label, rotation)
+			}
 			return "rect"
 		}
 	}
@@ -764,7 +780,8 @@ func (c *Conv) vector(s *XShape, M Mat, layer *LayerOut, hidden bool, w, h float
 				minX, maxX = math.Min(minX, m.X), math.Max(maxX, m.X)
 				minY, maxY = math.Min(minY, m.Y), math.Max(maxY, m.Y)
 			}
-			if sp.Closed && !g.NoFill {
+			// Visio fills a path that returns to its start point even when it is not flagged closed
+			if (sp.Closed || len(pts) > 3 && math.Hypot(pts[0].X-pts[len(pts)-1].X, pts[0].Y-pts[len(pts)-1].Y) < 1e-3) && !g.NoFill {
 				closedSubs = append(closedSubs, q)
 			}
 			if !g.NoLine {
@@ -844,14 +861,25 @@ func (c *Conv) textCell(s *XShape, M Mat, layer *LayerOut, hidden bool, w, h flo
 	if tw <= 0 {
 		tw = w
 	}
+	cy := y0 + th/2
 	if th <= 0 {
-		th = h
+		// a zero-height text box hangs from (top) or rises to (bottom) its pin
+		th = math.Max(h, 0.2)
+		cy = y0
+		switch int(c.pkg.num(s, "VerticalAlign", 1)) {
+		case 0:
+			cy = y0 - th/2
+		case 2:
+			cy = y0 + th/2
+		}
 	}
 	if tw <= 0 || th <= 0 {
 		c.warn("text on zero-size shape skipped")
 		return
 	}
-	ctr := M.Apply(Pt{x0 + tw/2, y0 + th/2})
+	ctr := M.Apply(Pt{x0 + tw/2, cy})
+	// TxtAngle is relative to the shape, e.g. text kept upright on a rotated shape
+	rotation = math.Mod(rotation-c.pkg.num(s, "TxtAngle", 0)*180/math.Pi+720, 360)
 	st := "text;strokeColor=none;fillColor=none;" + l.style + ";rotation=" + num2(rotation)
 	c.add(layer, &Out{Value: l.html, Style: st, X: ctr.X - tw*c.gpx()/2, Y: ctr.Y - th*c.gpx()/2, W: tw * c.gpx(), H: th * c.gpx()}, hidden)
 }
@@ -899,6 +927,9 @@ func (c *Conv) foreign(s *XShape, M Mat, layer *LayerOut, hidden bool, w, h floa
 			if mime, b := toPNG(target, data); b != nil {
 				st := fmt.Sprintf("shape=image;verticalLabelPosition=bottom;verticalAlign=top;imageAspect=0;image=data:%s,%s;rotation=%s", mime, base64.StdEncoding.EncodeToString(b), num2(rotation))
 				c.add(layer, &Out{Style: st, X: x, Y: y, W: pw, H: ph}, hidden)
+				if label, ok := c.buildLabel(s, w, h, rotation); ok {
+					c.textCell(s, M, layer, hidden, w, h, label, rotation)
+				}
 				return "image"
 			}
 		}
@@ -923,6 +954,11 @@ func toPNG(name string, data []byte) (string, []byte) {
 			return "image/png", b
 		}
 	}
+	if ext == ".bmp" {
+		if b := bmpToPNG(data); b != nil {
+			return "image/png", b
+		}
+	}
 	dir, err := os.MkdirTemp("", "vsdximg")
 	if err != nil {
 		return "", nil
@@ -935,7 +971,7 @@ func toPNG(name string, data []byte) (string, []byte) {
 		svg := filepath.Join(dir, "out.svg")
 		if err := exec.Command("emf2svg-conv", "-i", in, "-o", svg).Run(); err == nil {
 			if b, err := os.ReadFile(svg); err == nil && len(b) > 0 {
-				return "image/svg+xml", b
+				return "image/svg+xml", stripFrameImages(b)
 			}
 		}
 	}
@@ -962,6 +998,63 @@ func toPNG(name string, data []byte) (string, []byte) {
 		}
 	}
 	return "", nil
+}
+
+var svgImgRe = regexp.MustCompile(`<image width="([\d.]+)" height="([\d.]+)" x="-1\.0+" y="-1\.0+"[^>]*clip-path=[^>]*/>`)
+
+// stripFrameImages drops the full-canvas clipped bitmaps emf2svg emits for
+// EMF+ glow masks; draw.io renders them as dark smudges around the icon.
+func stripFrameImages(svg []byte) []byte {
+	return svgImgRe.ReplaceAll(svg, nil)
+}
+
+// bmpToPNG decodes an uncompressed 24/32-bit BMP keeping the alpha
+// channel, which sips discards (transparent pixels turn black).
+func bmpToPNG(d []byte) []byte {
+	if len(d) < 54 || d[0] != 'B' || d[1] != 'M' {
+		return nil
+	}
+	le := binary.LittleEndian
+	off := int(le.Uint32(d[10:]))
+	hdr := le.Uint32(d[14:])
+	if hdr < 40 || le.Uint32(d[30:]) != 0 {
+		return nil
+	}
+	w, h := int(int32(le.Uint32(d[18:]))), int(int32(le.Uint32(d[22:])))
+	bpp := int(le.Uint16(d[28:]))
+	topDown := h < 0
+	if topDown {
+		h = -h
+	}
+	if w <= 0 || h <= 0 || (bpp != 32 && bpp != 24) {
+		return nil
+	}
+	bytesPP := bpp / 8
+	stride := (w*bytesPP + 3) &^ 3
+	if off+stride*(h-1)+w*bytesPP > len(d) {
+		return nil
+	}
+	img := image.NewNRGBA(image.Rect(0, 0, w, h))
+	for y := 0; y < h; y++ {
+		sy := h - 1 - y
+		if topDown {
+			sy = y
+		}
+		row := d[off+sy*stride:]
+		for x := 0; x < w; x++ {
+			p := row[x*bytesPP:]
+			a := uint8(255)
+			if bytesPP == 4 {
+				a = p[3]
+			}
+			img.SetNRGBA(x, y, color.NRGBA{R: p[2], G: p[1], B: p[0], A: a})
+		}
+	}
+	var buf bytes.Buffer
+	if png.Encode(&buf, img) != nil {
+		return nil
+	}
+	return buf.Bytes()
 }
 
 // preserveSpaces keeps Visio's literal spacing, which HTML would
@@ -1075,7 +1168,8 @@ func (c *Conv) fitScale(s *XShape, runs []textRun, w, h, rotation float64) float
 func pngInsideEMF(data []byte) []byte {
 	sig := []byte("\x89PNG\r\n\x1a\n")
 	i := bytes.Index(data, sig)
-	if i < 0 {
+	// several PNGs mean a composite (glow, masks) that needs a real EMF renderer
+	if i < 0 || bytes.Count(data, sig) > 1 {
 		return nil
 	}
 	end := bytes.Index(data[i:], []byte("IEND"))

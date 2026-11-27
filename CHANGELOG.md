@@ -6,6 +6,36 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-27
+
+### Added
+- Text on images: a picture shape's own text is now converted to a
+  label above the image.
+- Uncompressed 24/32-bit BMP images are decoded natively, so their
+  transparency is kept (`sips` turned transparent pixels black).
+- Line patterns above 10 (Visio's custom dash styles) become a dashed
+  line instead of a solid one.
+
+### Changed
+- Default label font is Calibri, the theme font of Visio's default
+  styles, instead of Arial.
+
+### Fixed
+- Rectangles and ellipses whose text box is moved or resized stay
+  native draw.io shapes; the text goes to a separate text cell placed
+  where Visio draws it, instead of the whole shape becoming a stencil.
+- Text boxes with zero height hang from (top-aligned) or rise to
+  (bottom-aligned) their pin like in Visio, instead of being centred
+  on the shape.
+- `TxtAngle` is applied, so text kept upright on a rotated shape is no
+  longer rotated with it.
+- Paths that return to their start point are filled even when they are
+  not flagged as closed, as Visio does.
+- EMF images: the full-canvas glow-mask bitmaps that `emf2svg` emits are
+  removed (draw.io showed them as dark smudges), and EMF files holding
+  several PNGs are sent to the EMF renderer instead of keeping only
+  the first PNG.
+
 ## [0.1.2] - 2026-11-06
 
 ### Added
@@ -61,7 +91,8 @@ First public release.
 - Prebuilt binaries for Linux, macOS and Windows (amd64, arm64)
   via GoReleaser.
 
-[Unreleased]: https://github.com/skhell/visio-to-drawio/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/skhell/visio-to-drawio/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/skhell/visio-to-drawio/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/skhell/visio-to-drawio/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/skhell/visio-to-drawio/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/skhell/visio-to-drawio/releases/tag/v0.1.0
